@@ -1,7 +1,7 @@
 .vscode
 /build
 
-
+.clangd
 
 # Jespen and Maelstrom
 /store
