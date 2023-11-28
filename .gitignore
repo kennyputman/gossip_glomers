@@ -1,7 +1,10 @@
 .vscode
 /build
+vcpkg
 
 .clangd
 
 # Jespen and Maelstrom
 /store
+
+Makefile

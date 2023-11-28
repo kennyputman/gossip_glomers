@@ -8,8 +8,8 @@ project(gossip_glomers
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-find_package(fmt)
-find_package(nlohmann_json REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 add_library(maelstrom INTERFACE)
 target_include_directories(maelstrom INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
