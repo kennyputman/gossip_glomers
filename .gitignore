@@ -7,4 +7,5 @@ vcpkg
 # Jespen and Maelstrom
 /store
 
+# Helper Makefile
 Makefile
