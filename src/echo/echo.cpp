@@ -1,4 +1,5 @@
 #include "fmt/core.h"
+#include "maelstrom/message.hpp"
 #include "maelstrom/node.hpp"
 
 int main(int argc, char *argv[]) {
