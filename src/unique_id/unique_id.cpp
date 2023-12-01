@@ -11,10 +11,11 @@ int main(int argc, char const *argv[]) {
     std::generate(std::begin(seed_data), std::end(seed_data), std::ref(rd));
     std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
     std::mt19937 generator(seq);
+    uuids::uuid_random_generator gen{generator};
 
     auto node = std::make_shared<maelstrom::Node>();
 
-    node->handle("generate", [&](maelstrom::Message msg) {
+    node->handle("generate", [&node, &gen](maelstrom::Message msg) {
         maelstrom::Message response;
         response.src = msg.dest;
         response.dest = msg.src;
@@ -22,7 +23,6 @@ int main(int argc, char const *argv[]) {
         response.body["msg_id"] = node->get_next_msg_id();
         response.body["in_reply_to"] = msg.body["msg_id"];
 
-        uuids::uuid_random_generator gen{generator};
         uuids::uuid const id = gen();
         std::string uuid_str = uuids::to_string(id);
 
