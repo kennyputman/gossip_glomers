@@ -7,7 +7,7 @@ class Echo : public vortex::Node {
 
   protected:
     void register_handlers() override {
-        add_handler(vortex::MessageType::Echo, this, &Echo::handle_echo);
+        add_handler("echo", this, &Echo::handle_echo);
     }
 
   private:

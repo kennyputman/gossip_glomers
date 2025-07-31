@@ -1,7 +1,7 @@
 #pragma once
 
 #include "message.h"
-#include "message_type.h"
+#include <atomic>
 #include <unordered_map>
 
 namespace vortex {
@@ -40,6 +40,8 @@ class Node {
      */
     void send(const std::string &dest, const json &body);
 
+    std::string generate_id();
+
     /**
      * Registers a handler function for a specific message type.
      *
@@ -72,7 +74,7 @@ class Node {
      * @param method The member function pointer to handle the message
      */
     template <typename T>
-    void add_handler(MessageType type, T *instance,
+    void add_handler(const std::string &type, T *instance,
                      void (T::*method)(const Message &msg)) {
         handlers[type] = [instance, method](const Message &msg) {
             (instance->*method)(msg);
@@ -86,14 +88,14 @@ class Node {
     virtual void register_handlers() = 0;
 
   private:
-    MessageType get_type(const Message &msg);
-    void handle_message(const Message &msg, MessageType type);
+    Message parse_message(const std::string &input);
+    void handle_message(const Message &msg, const std::string &type);
     void handle_init(const Message &msg);
 
   private:
-    int next_msg_id;
+    std::atomic<int> next_msg_id;
     std::string node_id;
-    std::unordered_map<MessageType, std::function<void(const Message &)>>
+    std::unordered_map<std::string, std::function<void(const Message &)>>
         handlers;
 };
 } // namespace vortex

@@ -4,18 +4,15 @@
 namespace vortex {
 
 Node::Node() : next_msg_id(0), node_id("error_node_id_not_init"), handlers() {
-    add_handler(MessageType::Init, this, &Node::handle_init);
+    add_handler("init", this, &Node::handle_init);
 }
 
 void Node::run() {
     std::string input;
     while (std::getline(std::cin, input)) {
         try {
-            json parsed = json::parse(input);
-            Message msg;
-            from_json(parsed, msg);
-
-            MessageType type = get_type(msg);
+            Message msg = parse_message(input);
+            std::string type = msg.body["type"];
             handle_message(msg, type);
 
         } catch (const std::exception &e) {
@@ -38,6 +35,12 @@ void Node::send(const std::string &dest, const json &body) {
     std::cout << j.dump() << "\n";
 }
 
+std::string Node::generate_id() {
+    int id = this->next_msg_id.fetch_add(1);
+    std::string result = this->node_id + "_" + std::to_string(id);
+    return result;
+}
+
 void Node::handle_init(const Message &msg) {
     this->node_id = msg.body["node_id"];
     json body;
@@ -45,19 +48,14 @@ void Node::handle_init(const Message &msg) {
     reply(msg, body);
 }
 
-MessageType Node::get_type(const Message &msg) {
-    std::string type = msg.body["type"];
-
-    if (type == "init") {
-        return MessageType::Init;
-    } else if (type == "echo") {
-        return MessageType::Echo;
-    } else {
-        return MessageType::Error;
-    };
+Message Node::parse_message(const std::string &input) {
+    json parsed = json::parse(input);
+    Message msg;
+    from_json(parsed, msg);
+    return msg;
 }
 
-void Node::handle_message(const Message &msg, MessageType type) {
+void Node::handle_message(const Message &msg, const std::string &type) {
     auto it = handlers.find(type);
     if (it != handlers.end()) {
         it->second(msg);
