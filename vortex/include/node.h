@@ -1,8 +1,10 @@
 #pragma once
 
-#include "message.h"
 #include <atomic>
 #include <unordered_map>
+#include <unordered_set>
+
+#include "message.h"
 
 namespace vortex {
 using nlohmann::json;
@@ -96,6 +98,7 @@ class Node {
   private:
     std::atomic<int> next_msg_id;
     std::string node_id;
+    std::unordered_set<std::string> neighbors;
     std::unordered_map<std::string, std::function<void(const Message &)>>
         handlers;
 };

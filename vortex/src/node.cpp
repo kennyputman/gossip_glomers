@@ -1,5 +1,4 @@
 #include "node.h"
-#include <future>
 #include <iostream>
 
 namespace vortex {
@@ -41,6 +40,7 @@ std::string Node::generate_id() {
 
 void Node::handle_init(const Message &msg) {
     this->node_id = msg.body["node_id"];
+    msg.body["node_ids"].get_to(this->neighbors);
     json body;
     body["type"] = "init_ok";
     reply(msg, body);
