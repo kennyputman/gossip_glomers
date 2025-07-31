@@ -10,11 +10,7 @@ Node::Node() : next_msg_id(0), node_id("error_node_id_not_init"), handlers() {
 void Node::run() {
     std::string input;
     while (std::getline(std::cin, input)) {
-        try {
-            handle_request(input);
-        } catch (const std::exception &e) {
-            std::cerr << "Request error: " << e.what() << std::endl;
-        }
+        handle_request(input);
     };
 }
 
@@ -54,9 +50,13 @@ Message Node::parse_message(const std::string &input) {
 }
 
 void Node::handle_request(const std::string &input) {
-    Message msg = parse_message(input);
-    std::string type = msg.body["type"];
-    handle_message(msg, type);
+    try {
+        Message msg = parse_message(input);
+        std::string type = msg.body["type"];
+        handle_message(msg, type);
+    } catch (const std::exception &e) {
+        std::cerr << "Error parsing request" << input << std::endl;
+    }
 }
 
 void Node::handle_message(const Message &msg, const std::string &type) {
@@ -64,9 +64,12 @@ void Node::handle_message(const Message &msg, const std::string &type) {
     if (it != handlers.end()) {
         it->second(msg);
     } else {
-        // TODO: update this erro handling to propagate back up to main loop
-        std::cerr << "No handler registered for message type: " << type
-                  << std::endl;
+        std::string text = "Message type of: '" + type + "' is not registered";
+        json body;
+        body["type"] = "error";
+        body["code"] = 10;
+        body["text"] = text;
+        reply(msg, body);
     }
 }
 } // namespace vortex
