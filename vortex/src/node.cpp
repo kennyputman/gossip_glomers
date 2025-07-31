@@ -65,7 +65,8 @@ void Node::handle_message(const Message &msg, const std::string &type) {
         it->second(msg);
     } else {
         // TODO: update this erro handling to propagate back up to main loop
-        std::cerr << "No handler registered for message type\n";
+        std::cerr << "No handler registered for message type: " << type
+                  << std::endl;
     }
 }
 } // namespace vortex

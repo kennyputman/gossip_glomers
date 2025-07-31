@@ -89,6 +89,10 @@ class Node {
      */
     virtual void register_handlers() = 0;
 
+  protected:
+    std::unordered_set<std::string> neighbors;
+    std::string node_id;
+
   private:
     Message parse_message(const std::string &input);
     void handle_request(const std::string &input);
@@ -97,8 +101,6 @@ class Node {
 
   private:
     std::atomic<int> next_msg_id;
-    std::string node_id;
-    std::unordered_set<std::string> neighbors;
     std::unordered_map<std::string, std::function<void(const Message &)>>
         handlers;
 };
