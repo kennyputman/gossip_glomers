@@ -1,0 +1,13 @@
+Init
+{"src":"c1","dest":"n1","body":{"type":"init","msg_id":1,"node_id":"n1","node_ids":["n1","n2","n3"]}}
+
+Echo
+{"src":"c1","dest":"n1","body":{"type":"echo","msg_id":1,"echo":"Please echo 35"}}
+
+unique
+{"src":"n0","dest":"n1","body":{"type":"generate","msg_id":1}}
+
+broadcast
+{"id":2,"src":"c1","dest":"n1","body":{"type":"topology","topology": {"n1": ["n2"],"n2": ["n1"],"n3": ["n1"]},"msg_id":1}}
+{"src":"n0","dest":"n1","body":{"type": "broadcast", "message": 17, "msg_id":1}}
+{"src":"n0","dest":"n1","body":{"type": "read", "msg_id":1}}

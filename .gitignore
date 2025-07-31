@@ -1,0 +1,68 @@
+# Build directories
+/build
+/build*/
+
+/cmake-build-*/
+
+/*.o
+/*.obj
+/*.lo
+/*.la
+/*.al
+/*.libs
+/*.exe
+/*.out
+/*.app
+/*.a
+/*.lib
+/*.so
+/*.so.*
+/*.dylib
+/*.dll
+/*.exp
+/*.pdb
+
+# Conan generated files
+conan.lock
+conanbuildinfo.*
+graph_info.json
+conaninfo.txt
+conan_package.tgz
+
+# Conan cache (if using local Conan cache or exported packages)
+/.conan/
+
+# CLion / JetBrains IDEs
+.idea/
+cmake-build-*/
+
+# Visual Studio
+.vscode/
+*.sln
+*.vcxproj*
+*.user
+*.opensdf
+*.sdf
+*.cache
+*.pdb
+
+# Makefiles / Ninja
+Makefile
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# Misc
+*.log
+*.tmp
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# conan environment
+env/
+
+# maelstrom stuff
+store/
