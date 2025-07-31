@@ -41,7 +41,6 @@ TEST_CASE("Node handles init message") {
         node.run();
     });
 
-    // Wait briefly for node to process
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     std::cin.rdbuf(old_in);

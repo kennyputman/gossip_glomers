@@ -1,4 +1,5 @@
 #include "node.h"
+#include <future>
 #include <iostream>
 
 namespace vortex {
@@ -11,14 +12,11 @@ void Node::run() {
     std::string input;
     while (std::getline(std::cin, input)) {
         try {
-            Message msg = parse_message(input);
-            std::string type = msg.body["type"];
-            handle_message(msg, type);
-
+            handle_request(input);
         } catch (const std::exception &e) {
-            std::cerr << "Failed to parse json" << e.what() << std::endl;
+            std::cerr << "Request error: " << e.what() << std::endl;
         }
-    }
+    };
 }
 
 void Node::reply(const Message &req, const json &body) {
@@ -55,11 +53,18 @@ Message Node::parse_message(const std::string &input) {
     return msg;
 }
 
+void Node::handle_request(const std::string &input) {
+    Message msg = parse_message(input);
+    std::string type = msg.body["type"];
+    handle_message(msg, type);
+}
+
 void Node::handle_message(const Message &msg, const std::string &type) {
     auto it = handlers.find(type);
     if (it != handlers.end()) {
         it->second(msg);
     } else {
+        // TODO: update this erro handling to propagate back up to main loop
         std::cerr << "No handler registered for message type\n";
     }
 }
