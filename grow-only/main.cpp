@@ -12,7 +12,9 @@ using nlohmann::json;
 class GrowOnlyNode : public vortex::Node {
 
   public:
-    GrowOnlyNode() { register_handlers(); }
+    GrowOnlyNode() {
+        register_handlers();
+    }
 
   protected:
     void register_handlers() override {

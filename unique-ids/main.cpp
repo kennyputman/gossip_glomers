@@ -3,7 +3,9 @@
 
 class UniqueId : public vortex::Node {
   public:
-    UniqueId() { register_handlers(); }
+    UniqueId() {
+        register_handlers();
+    }
 
   protected:
     void register_handlers() override {

@@ -25,6 +25,9 @@ class Node {
     void run();
 
   protected:
+    std::unordered_set<std::string> neighbors;
+    std::string node_id;
+
     /**
      * Sends a reply to a given request message with the provided body.
      * Automatically fills in the "in_reply_to" field.
@@ -76,11 +79,8 @@ class Node {
      * @param method The member function pointer to handle the message
      */
     template <typename T>
-    void add_handler(const std::string &type, T *instance,
-                     void (T::*method)(const Message &msg)) {
-        handlers[type] = [instance, method](const Message &msg) {
-            (instance->*method)(msg);
-        };
+    void add_handler(const std::string &type, T *instance, void (T::*method)(const Message &msg)) {
+        handlers[type] = [instance, method](const Message &msg) { (instance->*method)(msg); };
     }
 
     /**
@@ -89,19 +89,15 @@ class Node {
      */
     virtual void register_handlers() = 0;
 
-  protected:
-    std::unordered_set<std::string> neighbors;
-    std::string node_id;
-
   private:
+    std::atomic<int> next_msg_id;
+    std::unordered_map<std::string, std::function<void(const Message &)>> handlers;
+    std::unordered_map<std::string, std::function<void(const Message &)>> rpc_callbacks;
+    std::mutex rpc_callbacks_mutex;
+
     Message parse_message(const std::string &input);
     void handle_request(const std::string &input);
     void handle_message(const Message &msg, const std::string &type);
     void handle_init(const Message &msg);
-
-  private:
-    std::atomic<int> next_msg_id;
-    std::unordered_map<std::string, std::function<void(const Message &)>>
-        handlers;
 };
 } // namespace vortex

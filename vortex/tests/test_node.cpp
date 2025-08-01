@@ -10,20 +10,21 @@ using nlohmann::json;
 
 class TestNode : public vortex::Node {
   public:
-    TestNode() { register_handlers(); }
+    TestNode() {
+        register_handlers();
+    }
 
   protected:
-    void register_handlers() override {}
+    void register_handlers() override {
+    }
 };
 
 TEST_CASE("Node handles init message") {
-    json input_json = {{"src", "c1"},
-                       {"dest", "n1"},
-                       {"body",
-                        {{"type", "init"},
-                         {"msg_id", 1},
-                         {"node_id", "n1"},
-                         {"node_ids", {"n1", "n2", "n3"}}}}};
+    json input_json = {
+        {"src", "c1"},
+        {"dest", "n1"},
+        {"body",
+         {{"type", "init"}, {"msg_id", 1}, {"node_id", "n1"}, {"node_ids", {"n1", "n2", "n3"}}}}};
 
     std::string input_msg = input_json.dump();
 

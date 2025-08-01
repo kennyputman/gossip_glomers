@@ -3,7 +3,9 @@
 
 class Echo : public vortex::Node {
   public:
-    Echo() { register_handlers(); }
+    Echo() {
+        register_handlers();
+    }
 
   protected:
     void register_handlers() override {

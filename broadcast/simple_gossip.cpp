@@ -17,7 +17,9 @@ class BroadcastNode : public vortex::Node {
         gossip_thread = std::jthread(&BroadcastNode::gossip, this);
     }
 
-    ~BroadcastNode() override { gossip_thread.request_stop(); }
+    ~BroadcastNode() override {
+        gossip_thread.request_stop();
+    }
 
   protected:
     void register_handlers() override {
@@ -85,13 +87,11 @@ class BroadcastNode : public vortex::Node {
                 body["messages"] = messages;
             }
 
-            std::vector<std::string> shuffled(this->neighbors.begin(),
-                                              this->neighbors.end());
+            std::vector<std::string> shuffled(this->neighbors.begin(), this->neighbors.end());
             std::shuffle(shuffled.begin(), shuffled.end(), rng);
 
             int max_neighbors = 5;
-            for (size_t i = 0;
-                 i < std::min<size_t>(max_neighbors, shuffled.size()); ++i) {
+            for (size_t i = 0; i < std::min<size_t>(max_neighbors, shuffled.size()); ++i) {
                 if (shuffled[i] != this->node_id) {
                     send(shuffled[i], body);
                 }
