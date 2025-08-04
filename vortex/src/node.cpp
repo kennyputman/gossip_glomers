@@ -81,6 +81,25 @@ void Node::handle_request(const std::string &input) {
 }
 
 void Node::handle_message(const Message &msg, const std::string &type) {
+    if (msg.body.contains("in_reply_to")) {
+        std::string reply_id = msg.body["in_reply_to"];
+        std::function<void(const Message &)> callback;
+
+        {
+            std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+            auto it = rpc_callbacks.find(reply_id);
+            if (it != rpc_callbacks.end()) {
+                callback = it->second;
+                rpc_callbacks.erase(it);
+            }
+        }
+
+        if (callback) {
+            callback(msg);
+            return;
+        }
+    }
+
     auto it = handlers.find(type);
     if (it != handlers.end()) {
         it->second(msg);
@@ -93,4 +112,5 @@ void Node::handle_message(const Message &msg, const std::string &type) {
         reply(msg, body);
     }
 }
+
 } // namespace vortex
