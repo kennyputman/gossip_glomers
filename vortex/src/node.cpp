@@ -1,5 +1,6 @@
 #include "node.h"
 #include <iostream>
+#include <syncstream>
 #include <thread>
 
 namespace vortex {
@@ -11,11 +12,13 @@ Node::Node() : next_msg_id(0), node_id("error_node_id_not_init"), handlers() {
 void Node::run() {
     std::string input;
     while (std::getline(std::cin, input)) {
-        handle_request(input);
-    };
+
+        thread_pool_executor().submit([this, input]() { this->handle_request(input); });
+    }
 }
 
 void Node::reply(const Message &req, const json &body) {
+
     json res_body = body;
     res_body["in_reply_to"] = req.body["msg_id"];
     send(req.src, res_body);
@@ -26,7 +29,9 @@ void Node::send(const std::string &dest, const json &body) {
     j["src"] = this->node_id;
     j["dest"] = dest;
     j["body"] = body;
-    std::cout << j.dump() << "\n";
+
+    std::osyncstream(std::cout) << j.dump() << "\n";
+    std::cout.flush();
 }
 
 void Node::rpc(const std::string &dest, const json &body,
@@ -56,6 +61,7 @@ std::string Node::generate_id() {
 }
 
 void Node::handle_init(const Message &msg) {
+
     this->node_id = msg.body["node_id"];
     msg.body["node_ids"].get_to(this->neighbors);
     json body;
@@ -76,7 +82,7 @@ void Node::handle_request(const std::string &input) {
         std::string type = msg.body["type"];
         handle_message(msg, type);
     } catch (const std::exception &e) {
-        std::cerr << "Error parsing request" << input << std::endl;
+        std::osyncstream(std::cerr) << "Error parsing request" << input << std::endl;
     }
 }
 

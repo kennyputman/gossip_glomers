@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "concurrencpp/concurrencpp.h"
+
 #include "message.h"
 
 namespace vortex {
@@ -27,6 +29,18 @@ class Node {
   protected:
     std::unordered_set<std::string> neighbors;
     std::string node_id;
+
+    /**
+     * @brief returns a thread pool executor for non blocking tasks
+     *
+     *  a general purpose executor that maintains a pool of threads. The thread pool executor is
+     * suitable for short cpu-bound tasks that don't block.
+     *
+     * @return concurrencpp::thread_pool_executor&
+     */
+    concurrencpp::thread_pool_executor &thread_pool_executor() {
+        return *runtime.thread_pool_executor();
+    };
 
     /**
      * @brief Sends a reply to a given request message with the response body. Automatically fills
@@ -116,6 +130,7 @@ class Node {
     std::string generate_id();
 
   private:
+    concurrencpp::runtime runtime;
     std::atomic<int> next_msg_id;
     std::unordered_map<std::string, std::function<void(const Message &)>> handlers;
     std::unordered_map<std::string, std::function<void(const Message &)>> rpc_callbacks;
