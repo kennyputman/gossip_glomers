@@ -14,7 +14,7 @@ class BroadcastNode : public vortex::Node {
   public:
     BroadcastNode() {
         register_handlers();
-        gossip_thread = std::jthread(&BroadcastNode::gossip, this);
+        gossip_thread = std::jthread([this](std::stop_token stoken) { gossip(stoken); });
     }
 
     ~BroadcastNode() override {
