@@ -1,5 +1,6 @@
 #include "node.h"
 #include <iostream>
+#include <thread>
 
 namespace vortex {
 
@@ -26,6 +27,26 @@ void Node::send(const std::string &dest, const json &body) {
     j["dest"] = dest;
     j["body"] = body;
     std::cout << j.dump() << "\n";
+}
+
+void Node::rpc(const std::string &dest, const json &body,
+               std::function<void(const Message &)> rpc_handler) {
+
+    std::string msg_id = generate_id();
+
+    {
+        std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+        rpc_callbacks.emplace(msg_id, rpc_handler);
+    }
+
+    json res_body = body;
+    res_body["msg_id"] = msg_id;
+    send(dest, res_body);
+}
+
+std::optional<Message> Node::sync_rpc(std::chrono::milliseconds timeout, const std::string &dest,
+                                      const json &body) {
+    return std::optional<Message>();
 }
 
 std::string Node::generate_id() {
