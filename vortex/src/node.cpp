@@ -60,7 +60,6 @@ void Node::run() {
 }
 
 void Node::reply(const Message &req, const json &body) {
-
     json res_body = body;
     res_body["in_reply_to"] = req.body["msg_id"];
     send(req.src, res_body);

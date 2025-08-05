@@ -1,14 +1,20 @@
 #include "seq_kv_node.h"
 
+/**
+ * @brief returns the entire body from a read using sync_rpc
+ *
+ * example {"type": "read_ok", "value": 1234}
+ *
+ * @param key
+ * @return concurrencpp::result<json>
+ */
 concurrencpp::result<json> vortex::SeqKVNode::read(const std::string &key) {
     json body;
     body["type"] = "read";
     body["key"] = key;
 
     auto rpc_res = co_await sync_rpc(service_id, body);
-
-    auto value = rpc_res.body["value"];
-    co_return value;
+    co_return rpc_res.body;
 }
 
 concurrencpp::result<void> vortex::SeqKVNode::write(const std::string &key, const json &value) {
