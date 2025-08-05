@@ -5,40 +5,60 @@
 #include <unordered_set>
 
 #include "message.h"
-#include "node.h"
+#include "seq_kv_node.h"
 
 using nlohmann::json;
 
-class GrowOnlyNode : public vortex::Node {
+class CRDTNode : public vortex::SeqKVNode {
 
   public:
-    GrowOnlyNode() {
+    CRDTNode() {
         register_handlers();
     }
 
   protected:
     void register_handlers() override {
-        add_handler("add", this, &GrowOnlyNode::handle_add);
-        add_handler("read", this, &GrowOnlyNode::handle_read);
+        add_handler("init", this, &CRDTNode::handle_init);
+        add_handler("add", this, &CRDTNode::handle_add);
+        add_handler("read", this, &CRDTNode::handle_read);
+    }
+
+    concurrencpp::result<void> handle_init(const vortex::Message &msg) override {
+
+        // must keep original logic in it to keep things going
+        this->node_id = msg.body["node_id"];
+        msg.body["node_ids"].get_to(this->neighbors);
+        json body;
+        body["type"] = "init_ok";
+
+        // write the initial value to the seq-kv node
+        json value = {{"value", 0}};
+        co_await write(node_id, value);
+        reply(msg, body);
+        co_return;
     }
 
   private:
-    void handle_add(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_add(const vortex::Message &msg) {
+        int delta = msg.body["delta"];
+
         json body;
         body["type"] = "add_ok";
         reply(msg, body);
+        co_return;
     }
 
-    void handle_read(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_read(const vortex::Message &msg) {
         json body;
         body["type"] = "read_ok";
         body["value"] = 123;
         reply(msg, body);
+        co_return;
     }
 };
 
 int main() {
-    GrowOnlyNode node;
+    CRDTNode node;
     node.run();
     return 0;
 }

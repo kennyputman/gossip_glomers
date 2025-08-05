@@ -36,7 +36,7 @@ class BroadcastNode : public vortex::Node {
     std::mutex messages_mutex;
     std::jthread gossip_thread;
 
-    void handle_broadcast(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_broadcast(const vortex::Message &msg) {
         int message = msg.body["message"];
 
         {
@@ -47,9 +47,10 @@ class BroadcastNode : public vortex::Node {
         json body;
         body["type"] = "broadcast_ok";
         reply(msg, body);
+        co_return;
     }
 
-    void handle_read(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_read(const vortex::Message &msg) {
         json body;
         body["type"] = "read_ok";
         {
@@ -57,23 +58,26 @@ class BroadcastNode : public vortex::Node {
             body["messages"] = messages;
         }
         reply(msg, body);
+        co_return;
     }
 
-    void handle_topology(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_topology(const vortex::Message &msg) {
         msg.body["topology"].get_to(topology);
 
         json body;
         body["type"] = "topology_ok";
         reply(msg, body);
+        co_return;
     }
 
-    void handle_gossip(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_gossip(const vortex::Message &msg) {
         std::unordered_set<int> incoming;
         msg.body["messages"].get_to(incoming);
         {
             std::lock_guard lock(messages_mutex);
             messages.insert(incoming.begin(), incoming.end());
         }
+        co_return;
     }
 
     void gossip(std::stop_token stop_token) {

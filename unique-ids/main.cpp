@@ -13,11 +13,12 @@ class UniqueId : public vortex::Node {
     }
 
   private:
-    void handle_generate(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_generate(const vortex::Message &msg) {
         vortex::json body;
         body["type"] = "generate_ok";
         body["id"] = this->generate_id();
         reply(msg, body);
+        co_return;
     }
 };
 
