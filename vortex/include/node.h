@@ -137,8 +137,6 @@ class Node {
     std::mutex rpc_callbacks_mutex;
 
     Message parse_message(const std::string &input);
-    void handle_request(const std::string &input);
-    void handle_message(const Message &msg, const std::string &type);
     void handle_init(const Message &msg);
 };
 } // namespace vortex
