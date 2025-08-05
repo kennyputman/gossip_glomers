@@ -23,7 +23,7 @@ void Node::run() {
         }
 
         // is this a callback messsage?
-        // if so hand the callback in a seperate task
+        // if match the callback to the reply it (sent msg_id) and handle it
         if (msg.body.contains("in_reply_to")) {
             std::string reply_id = msg.body["in_reply_to"];
             std::function<void(const Message &)> callback;
@@ -90,9 +90,25 @@ void Node::rpc(const std::string &dest, const json &body,
     send(dest, res_body);
 }
 
-std::optional<Message> Node::sync_rpc(std::chrono::milliseconds timeout, const std::string &dest,
-                                      const json &body) {
-    return std::optional<Message>();
+concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json &body) {
+
+    std::string msg_id = generate_id();
+
+    concurrencpp::result_promise<Message> promise;
+    auto result = promise.get_result();
+
+    {
+        std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+        rpc_callbacks.emplace(msg_id, [promise = std::move(promise)](const Message &msg) mutable {
+            promise.set_result(msg);
+        });
+    }
+
+    json req_body = body;
+    req_body["msg_id"] = msg_id;
+    send(dest, req_body);
+
+    return result;
 }
 
 std::string Node::generate_id() {

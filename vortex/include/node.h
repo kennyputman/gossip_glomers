@@ -68,15 +68,14 @@ class Node {
              std::function<void(const Message &)> rpc_handler);
 
     /**
-     * @brief
+     * @brief sends a synchronous rpc request ... returns the response message
      *
-     * @param timeout max time to wait for reply
      * @param dest The destination node ID
      * @param body The JSON body of the message
-     * @return std::optional<Message>
+     * @return concurrencpp::result<Message>
+     *
      */
-    std::optional<Message> sync_rpc(std::chrono::milliseconds timeout, const std::string &dest,
-                                    const json &body);
+    concurrencpp::result<Message> sync_rpc(const std::string &dest, const json &body);
 
     /**
      * @brief Registers a handler function for a specific message type.
