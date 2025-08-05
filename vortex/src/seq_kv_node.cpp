@@ -1,0 +1,37 @@
+#include "seq_kv_node.h"
+
+concurrencpp::result<json> vortex::SeqKVNode::read(const std::string &key) {
+    json body;
+    body["type"] = "read";
+    body["key"] = key;
+
+    auto rpc_res = co_await sync_rpc(service_id, body);
+
+    auto value = rpc_res.body["value"];
+    co_return value;
+}
+
+concurrencpp::result<void> vortex::SeqKVNode::write(const std::string &key, const json &value) {
+    json body;
+    body["type"] = "write";
+    body["key"] = key;
+    body["value"] = value;
+
+    co_await sync_rpc(service_id, body);
+    co_return;
+}
+
+concurrencpp::result<void> vortex::SeqKVNode::cas(const std::string &key, const json &from,
+                                                  const json &to, bool create_if_not_exists) {
+    json body;
+    body["type"] = "cas";
+    body["key"] = key;
+    body["from"] = from;
+    body["to"] = to;
+    if (create_if_not_exists) {
+        body["create_if_not_exists"] = true;
+    }
+
+    co_await sync_rpc(service_id, body);
+    co_return;
+}
