@@ -20,13 +20,14 @@ void Node::run() {
             type = msg.body["type"];
         } catch (const std::exception &e) {
             std::osyncstream(std::cerr) << "Error parsing request" << input << std::endl;
+            continue;
         }
 
         // is this a callback messsage?
         // if match the callback to the reply it (sent msg_id) and handle it
         if (msg.body.contains("in_reply_to")) {
             std::string reply_id = msg.body["in_reply_to"];
-            std::function<void(const Message &)> callback;
+            std::function<concurrencpp::result<void>(const Message &)> callback;
 
             {
                 std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
@@ -38,14 +39,14 @@ void Node::run() {
             }
 
             if (callback) {
-                thread_pool_executor().submit([msg, callback]() { callback(msg); });
+                thread_pool_executor().submit([task = callback(msg)]() mutable { task.get(); });
             }
         } else {
             // not a callback -> match and dispatch to handler in task thread
             auto it = handlers.find(type);
             if (it != handlers.end()) {
                 auto handler = it->second;
-                thread_pool_executor().submit([handler, msg] { handler(msg); });
+                thread_pool_executor().submit([task = handler(msg)]() mutable { task.get(); });
             } else {
                 std::string text = "Message type of: '" + type + "' is not registered";
                 json body;
@@ -76,7 +77,7 @@ void Node::send(const std::string &dest, const json &body) {
 }
 
 void Node::rpc(const std::string &dest, const json &body,
-               std::function<void(const Message &)> rpc_handler) {
+               std::function<concurrencpp::result<void>(const Message &)> rpc_handler) {
 
     std::string msg_id = generate_id();
 
@@ -91,22 +92,24 @@ void Node::rpc(const std::string &dest, const json &body,
 }
 
 concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json &body) {
-
     std::string msg_id = generate_id();
 
     concurrencpp::result_promise<Message> promise;
     auto result = promise.get_result();
 
+    auto promise_ptr = std::make_shared<concurrencpp::result_promise<Message>>(std::move(promise));
     {
         std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
-        rpc_callbacks.emplace(msg_id, [promise = std::move(promise)](const Message &msg) mutable {
-            promise.set_result(msg);
-        });
+        rpc_callbacks.emplace(msg_id,
+                              [promise_ptr](const Message &msg) -> concurrencpp::result<void> {
+                                  promise_ptr->set_result(msg);
+                                  co_return;
+                              });
     }
 
-    json req_body = body;
-    req_body["msg_id"] = msg_id;
-    send(dest, req_body);
+    json res_body = body;
+    res_body["msg_id"] = msg_id;
+    send(dest, res_body);
 
     return result;
 }
@@ -117,13 +120,15 @@ std::string Node::generate_id() {
     return result;
 }
 
-void Node::handle_init(const Message &msg) {
+concurrencpp::result<void> Node::handle_init(const Message &msg) {
 
     this->node_id = msg.body["node_id"];
     msg.body["node_ids"].get_to(this->neighbors);
     json body;
     body["type"] = "init_ok";
     reply(msg, body);
+
+    co_return;
 }
 
 Message Node::parse_message(const std::string &input) {
@@ -131,6 +136,10 @@ Message Node::parse_message(const std::string &input) {
     Message msg;
     from_json(parsed, msg);
     return msg;
+}
+
+void Node::register_handlers() {
+    throw std::logic_error("register_handlers() must be overridden in derived class.");
 }
 
 } // namespace vortex

@@ -1,5 +1,6 @@
 add_library(vortex
     src/node.cpp
+    src/seq_kv_node.cpp
 )
 
 target_include_directories(vortex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
