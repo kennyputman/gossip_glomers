@@ -6,6 +6,7 @@
 
 #include "message.h"
 #include "seq_kv_node.h"
+#include <iostream>
 
 using nlohmann::json;
 
@@ -24,27 +25,36 @@ class CRDTNode : public vortex::SeqKVNode {
     }
 
     concurrencpp::result<void> handle_init(const vortex::Message &msg) override {
+        auto local_msg = msg;
 
-        // must keep original logic in it to keep things going
-        this->node_id = msg.body["node_id"];
-        msg.body["node_ids"].get_to(this->neighbors);
+        this->node_id = local_msg.body["node_id"];
+        local_msg.body["node_ids"].get_to(this->neighbors);
         json body;
         body["type"] = "init_ok";
+        reply(local_msg, body);
 
-        // write the initial value to the seq-kv node
-        json value = {{"value", 0}};
-        co_await write(node_id, value);
-        reply(msg, body);
+        co_await write(node_id, 0);
         co_return;
     }
 
   private:
     concurrencpp::result<void> handle_add(const vortex::Message &msg) {
-        int delta = msg.body["delta"];
+        auto local_msg = msg;
+        std::cerr << "START ADD [" << &msg << "] " << msg << std::endl;
+
+        int delta = local_msg.body["delta"];
+
+        auto res = co_await read(node_id);
+        int value = res["value"].get<int>();
+
+        int inc = delta + value;
+        co_await write(node_id, inc);
 
         json body;
         body["type"] = "add_ok";
-        reply(msg, body);
+
+        std::cerr << "END ADD [" << &msg << "] " << msg << std::endl;
+        reply(local_msg, body);
         co_return;
     }
 
