@@ -36,7 +36,7 @@ class BroadcastNode : public vortex::Node {
     std::mutex messages_mutex;
     std::jthread gossip_thread;
 
-    concurrencpp::result<void> handle_broadcast(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_broadcast(const vortex::Message msg) {
         int message = msg.body["message"];
 
         {
@@ -50,7 +50,7 @@ class BroadcastNode : public vortex::Node {
         co_return;
     }
 
-    concurrencpp::result<void> handle_read(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_read(const vortex::Message msg) {
         json body;
         body["type"] = "read_ok";
         {
@@ -61,7 +61,7 @@ class BroadcastNode : public vortex::Node {
         co_return;
     }
 
-    concurrencpp::result<void> handle_topology(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_topology(const vortex::Message msg) {
         msg.body["topology"].get_to(topology);
 
         json body;
@@ -70,7 +70,7 @@ class BroadcastNode : public vortex::Node {
         co_return;
     }
 
-    concurrencpp::result<void> handle_gossip(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_gossip(const vortex::Message msg) {
         std::unordered_set<int> incoming;
         msg.body["messages"].get_to(incoming);
         {

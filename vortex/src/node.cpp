@@ -27,7 +27,7 @@ void Node::run() {
         // if match the callback to the reply it (sent msg_id) and handle it
         if (msg.body.contains("in_reply_to")) {
             std::string reply_id = msg.body["in_reply_to"];
-            std::function<concurrencpp::result<void>(const Message &)> callback;
+            std::function<concurrencpp::result<void>(const Message)> callback;
 
             {
                 std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
@@ -76,7 +76,7 @@ void Node::send(const std::string &dest, const json &body) {
 }
 
 void Node::rpc(const std::string &dest, const json &body,
-               std::function<concurrencpp::result<void>(const Message &)> rpc_handler) {
+               std::function<concurrencpp::result<void>(const Message)> rpc_handler) {
 
     std::string msg_id = generate_id();
 
@@ -100,7 +100,7 @@ concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json
     {
         std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
         rpc_callbacks.emplace(msg_id,
-                              [promise_ptr](const Message &msg) -> concurrencpp::result<void> {
+                              [promise_ptr](const Message msg) -> concurrencpp::result<void> {
                                   promise_ptr->set_result(msg);
                                   co_return;
                               });
@@ -119,7 +119,7 @@ std::string Node::generate_id() {
     return result;
 }
 
-concurrencpp::result<void> Node::handle_init(const Message &msg) {
+concurrencpp::result<void> Node::handle_init(const Message msg) {
 
     this->node_id = msg.body["node_id"];
     msg.body["node_ids"].get_to(this->neighbors);

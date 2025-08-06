@@ -13,7 +13,7 @@ class Echo : public vortex::Node {
     }
 
   private:
-    concurrencpp::result<void> handle_echo(const vortex::Message &msg) {
+    concurrencpp::result<void> handle_echo(const vortex::Message msg) {
         vortex::json body;
         body["type"] = "echo_ok";
         body["echo"] = msg.body["echo"];

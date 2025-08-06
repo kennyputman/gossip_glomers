@@ -65,7 +65,7 @@ class Node {
      * @param body The JSON body of the message
      */
     void rpc(const std::string &dest, const json &body,
-             std::function<concurrencpp::result<void>(const Message &)> rpc_handler);
+             std::function<concurrencpp::result<void>(Message)> rpc_handler);
 
     /**
      * @brief sends a synchronous rpc request ... returns the response message
@@ -109,11 +109,11 @@ class Node {
 
     template <typename T>
     void add_handler(const std::string &type, T *instance,
-                     concurrencpp::result<void> (T::*method)(const Message &)) {
-        handlers[type] = [instance, method](const Message &msg) -> concurrencpp::result<void> {
-            co_return co_await (instance->*method)(msg);
+                     concurrencpp::result<void> (T::*method)(Message)) {
+        handlers[type] = [instance, method](Message msg) -> concurrencpp::result<void> {
+            co_return co_await (instance->*method)(std::move(msg));
         };
-    };
+    }
 
     /**
      * @brief registers all handlers for class
@@ -139,14 +139,13 @@ class Node {
      *
      * @param msg
      */
-    virtual concurrencpp::result<void> handle_init(const Message &msg);
+    virtual concurrencpp::result<void> handle_init(const Message msg);
 
   private:
     concurrencpp::runtime runtime;
     std::atomic<int> next_msg_id;
-    std::unordered_map<std::string, std::function<concurrencpp::result<void>(const Message &)>>
-        handlers;
-    std::unordered_map<std::string, std::function<concurrencpp::result<void>(const Message &)>>
+    std::unordered_map<std::string, std::function<concurrencpp::result<void>(Message)>> handlers;
+    std::unordered_map<std::string, std::function<concurrencpp::result<void>(Message)>>
         rpc_callbacks;
     std::mutex rpc_callbacks_mutex;
 
