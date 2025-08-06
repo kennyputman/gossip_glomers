@@ -1,13 +1,5 @@
 #include "seq_kv_node.h"
 
-/**
- * @brief returns the entire body from a read using sync_rpc
- *
- * example {"type": "read_ok", "value": 1234}
- *
- * @param key
- * @return concurrencpp::result<json>
- */
 concurrencpp::result<json> vortex::SeqKVNode::read(const std::string &key) {
     json body;
     body["type"] = "read";
@@ -27,8 +19,9 @@ concurrencpp::result<void> vortex::SeqKVNode::write(const std::string &key, cons
     co_return;
 }
 
-concurrencpp::result<void> vortex::SeqKVNode::cas(const std::string &key, const json &from,
-                                                  const json &to, bool create_if_not_exists) {
+concurrencpp::result<void> vortex::SeqKVNode::compare_and_swap(const std::string &key,
+                                                               const json &from, const json &to,
+                                                               bool create_if_not_exists) {
     json body;
     body["type"] = "cas";
     body["key"] = key;
