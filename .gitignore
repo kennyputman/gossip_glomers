@@ -66,3 +66,6 @@ env/
 
 # maelstrom stuff
 store/
+
+# writeups and such
+notes/
