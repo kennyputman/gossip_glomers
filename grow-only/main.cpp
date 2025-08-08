@@ -12,19 +12,19 @@
 
 using nlohmann::json;
 
-class CRDTNode : public vortex::SeqKVNode {
+class GrowOnlyNode : public vortex::SeqKVNode {
 
   public:
-    CRDTNode() {
+    GrowOnlyNode() {
         register_handlers();
     }
 
   protected:
     void register_handlers() override {
-        add_handler("init", this, &CRDTNode::handle_init);
-        add_handler("add", this, &CRDTNode::handle_add);
-        add_handler("read", this, &CRDTNode::handle_read);
-        add_handler("local", this, &CRDTNode::handle_local);
+        add_handler("init", this, &GrowOnlyNode::handle_init);
+        add_handler("add", this, &GrowOnlyNode::handle_add);
+        add_handler("read", this, &GrowOnlyNode::handle_read);
+        add_handler("local", this, &GrowOnlyNode::handle_local);
     }
 
     concurrencpp::result<void> handle_init(const vortex::Message msg) override {
@@ -120,7 +120,7 @@ class CRDTNode : public vortex::SeqKVNode {
 };
 
 int main() {
-    CRDTNode node;
+    GrowOnlyNode node;
     node.run();
     return 0;
 }
