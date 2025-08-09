@@ -133,13 +133,12 @@ class Node {
     std::string generate_id();
 
     /**
-     * @brief handles the initialization message
-     *
-     * If overridden the original initialization message handling must be preserved
+     * @brief extends the initialization message funcitonality
      *
      * @param msg
+     *
      */
-    virtual concurrencpp::result<void> handle_init(const Message msg);
+    virtual concurrencpp::result<void> on_init(const Message msg);
 
   private:
     concurrencpp::runtime runtime;
@@ -149,6 +148,7 @@ class Node {
         rpc_callbacks;
     std::mutex rpc_callbacks_mutex;
 
+    concurrencpp::result<void> handle_init(const Message msg);
     Message parse_message(const std::string &input);
 };
 } // namespace vortex

@@ -119,13 +119,19 @@ std::string Node::generate_id() {
     return result;
 }
 
+concurrencpp::result<void> Node::on_init(const Message msg) {
+    co_return;
+}
+
 concurrencpp::result<void> Node::handle_init(const Message msg) {
 
-    this->node_id = msg.body["node_id"];
-    msg.body["node_ids"].get_to(this->neighbors);
+    node_id = msg.body["node_id"];
+    msg.body["node_ids"].get_to(neighbors);
     json body;
     body["type"] = "init_ok";
     reply(msg, body);
+
+    co_await on_init(msg);
 
     co_return;
 }

@@ -21,21 +21,12 @@ class GrowOnlyNode : public vortex::SeqKVNode {
 
   protected:
     void register_handlers() override {
-        add_handler("init", this, &GrowOnlyNode::handle_init);
         add_handler("add", this, &GrowOnlyNode::handle_add);
         add_handler("read", this, &GrowOnlyNode::handle_read);
         add_handler("local", this, &GrowOnlyNode::handle_local);
     }
 
-    concurrencpp::result<void> handle_init(const vortex::Message msg) override {
-        auto local_msg = msg;
-
-        this->node_id = local_msg.body["node_id"];
-        local_msg.body["node_ids"].get_to(this->neighbors);
-        json body;
-        body["type"] = "init_ok";
-        reply(msg, body);
-
+    concurrencpp::result<void> on_init(const vortex::Message msg) override {
         co_await write(node_id, 0);
         co_return;
     }
