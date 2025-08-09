@@ -1,6 +1,9 @@
-#include "seq_kv_node.h"
+#include "kv_node.h"
 
-concurrencpp::result<json> vortex::SeqKVNode::read(const std::string &key) {
+vortex::KVNode::KVNode(const std::string &service_id) : service_id(service_id) {
+}
+
+concurrencpp::result<json> vortex::KVNode::read(const std::string &key) {
     json body;
     body["type"] = "read";
     body["key"] = key;
@@ -9,7 +12,7 @@ concurrencpp::result<json> vortex::SeqKVNode::read(const std::string &key) {
     co_return rpc_res.body;
 }
 
-concurrencpp::result<void> vortex::SeqKVNode::write(const std::string &key, const json &value) {
+concurrencpp::result<void> vortex::KVNode::write(const std::string &key, const json &value) {
     json body;
     body["type"] = "write";
     body["key"] = key;
@@ -19,9 +22,9 @@ concurrencpp::result<void> vortex::SeqKVNode::write(const std::string &key, cons
     co_return;
 }
 
-concurrencpp::result<void> vortex::SeqKVNode::compare_and_swap(const std::string &key,
-                                                               const json &from, const json &to,
-                                                               bool create_if_not_exists) {
+concurrencpp::result<void> vortex::KVNode::compare_and_swap(const std::string &key,
+                                                            const json &from, const json &to,
+                                                            bool create_if_not_exists) {
     json body;
     body["type"] = "cas";
     body["key"] = key;

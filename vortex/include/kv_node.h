@@ -5,7 +5,9 @@
 using nlohmann::json;
 namespace vortex {
 
-class SeqKVNode : public Node {
+class KVNode : public Node {
+  public:
+    KVNode(const std::string &);
 
   protected:
     /**
@@ -31,7 +33,7 @@ class SeqKVNode : public Node {
                                                 const json &to, bool create_if_not_exists);
 
   private:
-    std::string service_id = "lin-kv";
+    std::string service_id = "Error: service_id not assigned";
 };
 
 } // namespace vortex

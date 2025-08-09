@@ -6,16 +6,16 @@
 #include <thread>
 #include <unordered_set>
 
+#include "kv_node.h"
 #include "message.h"
-#include "seq_kv_node.h"
 #include <iostream>
 
 using nlohmann::json;
 
-class GrowOnlyNode : public vortex::SeqKVNode {
+class GrowOnlyNode : public vortex::KVNode {
 
   public:
-    GrowOnlyNode() {
+    GrowOnlyNode(const std::string service_id) : KVNode(service_id) {
         register_handlers();
     }
 
@@ -111,7 +111,7 @@ class GrowOnlyNode : public vortex::SeqKVNode {
 };
 
 int main() {
-    GrowOnlyNode node;
+    GrowOnlyNode node("lin-kv");
     node.run();
     return 0;
 }

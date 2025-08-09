@@ -6,16 +6,16 @@
 #include <thread>
 #include <unordered_set>
 
+#include "kv_node.h"
 #include "message.h"
-#include "seq_kv_node.h"
 #include <iostream>
 
 using nlohmann::json;
 
-class KafkaNode : public vortex::SeqKVNode {
+class KafkaNode : public vortex::KVNode {
 
-    public:
-    KafkaNode() {
+  public:
+    KafkaNode(const std::string &id) : KVNode(id) {
         register_handlers();
     }
 
@@ -60,7 +60,7 @@ class KafkaNode : public vortex::SeqKVNode {
 };
 
 int main() {
-    KafkaNode node;
+    KafkaNode node("seq-kv");
     node.run();
     return 0;
 }
