@@ -42,7 +42,7 @@ class GrowOnlyNode : public vortex::SeqKVNode {
 
   private:
     std::vector<int> sum_values;
-    std::mutex sum_values_mutex;
+    concurrencpp::async_lock lock;
 
     concurrencpp::result<void> handle_add(const vortex::Message msg) {
 
@@ -78,7 +78,7 @@ class GrowOnlyNode : public vortex::SeqKVNode {
         int value = res["value"].get<int>();
 
         {
-            std::scoped_lock<std::mutex> lock(sum_values_mutex);
+            concurrencpp::scoped_async_lock raii_wrapper = co_await lock.lock(executor());
             sum_values.clear();
             sum_values.push_back(value);
         }
@@ -111,7 +111,7 @@ class GrowOnlyNode : public vortex::SeqKVNode {
 
         int value = res.body["value"].get<int>();
         {
-            std::scoped_lock<std::mutex> lock(sum_values_mutex);
+            concurrencpp::scoped_async_lock raii_wrapper = co_await lock.lock(executor());
             sum_values.push_back(value);
         }
 

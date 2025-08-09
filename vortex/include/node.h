@@ -36,10 +36,10 @@ class Node {
      *  a general purpose executor that maintains a pool of threads. The thread pool executor is
      * suitable for short cpu-bound tasks that don't block.
      *
-     * @return concurrencpp::thread_pool_executor&
+     * @return concurrencpp::executor&
      */
-    concurrencpp::thread_pool_executor &thread_pool_executor() {
-        return *runtime.thread_pool_executor();
+    std::shared_ptr<concurrencpp::executor> executor() {
+        return runtime.background_executor();
     };
 
     /**

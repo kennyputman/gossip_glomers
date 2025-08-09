@@ -33,14 +33,14 @@ class BroadcastNode : public vortex::Node {
     std::unordered_set<int> messages;
     std::map<std::string, std::vector<std::string>> topology;
     std::mt19937 rng{std::random_device{}()};
-    std::mutex messages_mutex;
+    concurrencpp::async_lock lock;
     std::jthread gossip_thread;
 
     concurrencpp::result<void> handle_broadcast(const vortex::Message msg) {
         int message = msg.body["message"];
 
         {
-            std::lock_guard lock(messages_mutex);
+            concurrencpp::scoped_async_lock raii_wrapper = co_await lock.lock(executor());
             messages.insert(message);
         }
 
@@ -54,7 +54,7 @@ class BroadcastNode : public vortex::Node {
         json body;
         body["type"] = "read_ok";
         {
-            std::lock_guard lock(messages_mutex);
+            concurrencpp::scoped_async_lock raii_wrapper = co_await lock.lock(executor());
             body["messages"] = messages;
         }
         reply(msg, body);
@@ -74,20 +74,20 @@ class BroadcastNode : public vortex::Node {
         std::unordered_set<int> incoming;
         msg.body["messages"].get_to(incoming);
         {
-            std::lock_guard lock(messages_mutex);
+            concurrencpp::scoped_async_lock raii_wrapper = co_await lock.lock(executor());
             messages.insert(incoming.begin(), incoming.end());
         }
         co_return;
     }
 
-    void gossip(std::stop_token stop_token) {
+    concurrencpp::result<void> gossip(std::stop_token stop_token) {
         while (!stop_token.stop_requested()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
             json body;
             body["type"] = "gossip";
             {
-                std::lock_guard lock(messages_mutex);
+                concurrencpp::scoped_async_lock raii_wrapper = co_await lock.lock(executor());
                 body["messages"] = messages;
             }
 
