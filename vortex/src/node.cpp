@@ -39,14 +39,21 @@ void Node::run() {
             }
 
             if (callback) {
-                executor()->submit([task = callback(msg)]() mutable { task.get(); });
+                executor()->submit([task = callback(msg)]() mutable -> concurrencpp::result<void> {
+                    co_await task;
+                    co_return;
+                });
             }
         } else {
             // not a callback -> match and dispatch to handler in task thread
             auto it = handlers.find(type);
             if (it != handlers.end()) {
                 auto handler = it->second;
-                executor()->submit([task = handler(msg)]() mutable { task.get(); });
+                executor()->submit(
+                    [task = handler(std::move(msg))]() mutable -> concurrencpp::result<void> {
+                        co_await task;
+                        co_return;
+                    });
             } else {
                 std::string text = "Message type of: '" + type + "' is not registered";
                 json body;
