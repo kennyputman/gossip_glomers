@@ -97,6 +97,7 @@ void Node::rpc(const std::string &dest, const json &body,
     send(dest, res_body);
 }
 
+// TODO: Forward this to the timeout one
 concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json &body) {
     std::string msg_id = generate_id();
 
@@ -117,7 +118,45 @@ concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json
     res_body["msg_id"] = msg_id;
     send(dest, res_body);
 
-    return result;
+    co_return co_await result;
+}
+
+concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json &body,
+                                             std::chrono::milliseconds timeout) {
+    std::string msg_id = generate_id();
+
+    concurrencpp::result_promise<Message> promise;
+    auto result = promise.get_result();
+
+    auto promise_ptr = std::make_shared<concurrencpp::result_promise<Message>>(std::move(promise));
+    {
+        std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+        rpc_callbacks.emplace(msg_id,
+                              [promise_ptr](const Message msg) -> concurrencpp::result<void> {
+                                  promise_ptr->set_result(msg);
+                                  co_return;
+                              });
+    }
+
+    json res_body = body;
+    res_body["msg_id"] = msg_id;
+    send(dest, res_body);
+
+    auto timeout_res = timer()->make_delay_object(timeout, executor()).run();
+    auto race =
+        co_await concurrencpp::when_any(executor(), std::move(result), std::move(timeout_res));
+
+    if (race.index == 0) {
+        auto &ready_rpc = std::get<0>(race.results);
+        co_return co_await ready_rpc;
+    } else {
+        {
+            // TODO: update to concurrencpp lock
+            std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+            rpc_callbacks.erase(msg_id);
+        }
+        throw std::runtime_error("rpc timeout");
+    }
 }
 
 std::string Node::generate_id() {

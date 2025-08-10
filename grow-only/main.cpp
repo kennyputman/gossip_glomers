@@ -9,6 +9,7 @@
 #include "kv_node.h"
 #include "message.h"
 #include <iostream>
+#include <syncstream>
 
 using nlohmann::json;
 
@@ -31,7 +32,7 @@ class GrowOnlyNode : public vortex::KVNode {
     }
 
     /*
-        template method that initializes the lin-kv service with 0 for this nodes id
+        template method that initializes the seq-kv service with 0 for this nodes id
     */
     concurrencpp::result<void> on_init(const vortex::Message msg) override {
         co_await write(node_id, 0);
@@ -43,8 +44,8 @@ class GrowOnlyNode : public vortex::KVNode {
     concurrencpp::async_lock lock;
 
     /*
-        reads current value from lin-kv service increases by the delta
-        and then writes it back to the lin-kv service
+        reads current value from seq-kv service increases by the delta
+        and then writes it back to the seq-kv service
     */
     concurrencpp::result<void> handle_add(const vortex::Message msg) {
 
@@ -79,7 +80,7 @@ class GrowOnlyNode : public vortex::KVNode {
     }
 
     /*
-        gets the initial read from the lin-kv service
+        gets the initial read from the seq-kv service
         then uses a fan out strategy using the 'local' messages to acquire reads
         from all of its neighbors.
 
@@ -120,17 +121,17 @@ class GrowOnlyNode : public vortex::KVNode {
                                                      const std::string id) {
         json body;
         body["type"] = "local";
-        body["msg_id"] = generate_id();
 
-        auto res = co_await sync_rpc(id, body);
+        try {
 
-        int value = res.body["value"].get<int>();
-        {
-            concurrencpp::scoped_async_lock raii_wrapper = co_await lock.lock(executor());
+            auto res = co_await sync_rpc(id, body, std::chrono::milliseconds(300));
+
+            int value = res.body["value"].get<int>();
+            concurrencpp::scoped_async_lock g = co_await lock.lock(executor());
             sum_values.push_back(value);
+        } catch (const std::exception &) {
+            std::osyncstream(std::cerr) << "get for node: " << id << " failed" << std::endl;
         }
-
-        co_return;
     }
 };
 

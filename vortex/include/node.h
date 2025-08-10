@@ -42,6 +42,10 @@ class Node {
         return runtime.background_executor();
     };
 
+    std::shared_ptr<concurrencpp::timer_queue> timer() {
+        return runtime.timer_queue();
+    }
+
     /**
      * @brief Sends a reply to a given request message with the response body. Automatically fills
      * in the "in_reply_to" field.
@@ -75,7 +79,19 @@ class Node {
      * @return concurrencpp::result<Message>
      *
      */
+
     concurrencpp::result<Message> sync_rpc(const std::string &dest, const json &body);
+    /**
+     * @brief sends a synchronous rpc request ... returns the response message
+     *
+     * @param dest The destination node ID
+     * @param body The JSON body of the message
+     * @param timeout sets the timeout for the rpc call - will throw error
+     * @return concurrencpp::result<Message>
+     *
+     */
+    concurrencpp::result<Message> sync_rpc(const std::string &dest, const json &body,
+                                           std::chrono::milliseconds timeout);
 
     /**
      * @brief Registers a handler function for a specific message type.
