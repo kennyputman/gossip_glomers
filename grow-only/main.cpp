@@ -12,6 +12,10 @@
 
 using nlohmann::json;
 
+/*
+    Implements a stateless grow only counter using the sequentially-consistent
+    key/value store service provided by maelstrom
+*/
 class GrowOnlyNode : public vortex::KVNode {
 
   public:
@@ -26,6 +30,9 @@ class GrowOnlyNode : public vortex::KVNode {
         add_handler("local", this, &GrowOnlyNode::handle_local);
     }
 
+    /*
+        template method that initializes the lin-kv service with 0 for this nodes id
+    */
     concurrencpp::result<void> on_init(const vortex::Message msg) override {
         co_await write(node_id, 0);
         co_return;
@@ -35,6 +42,10 @@ class GrowOnlyNode : public vortex::KVNode {
     std::vector<int> sum_values;
     concurrencpp::async_lock lock;
 
+    /*
+        reads current value from lin-kv service increases by the delta
+        and then writes it back to the lin-kv service
+    */
     concurrencpp::result<void> handle_add(const vortex::Message msg) {
 
         int delta = msg.body["delta"];
@@ -52,6 +63,10 @@ class GrowOnlyNode : public vortex::KVNode {
         co_return;
     }
 
+    /*
+        handles local calls from other nodes during reads
+        gets its current value and returns it to the calling node
+    */
     concurrencpp::result<void> handle_local(const vortex::Message msg) {
         auto res = co_await read(node_id);
         int value = res["value"].get<int>();
@@ -63,8 +78,14 @@ class GrowOnlyNode : public vortex::KVNode {
         co_return;
     }
 
-    concurrencpp::result<void> handle_read(const vortex::Message msg) {
+    /*
+        gets the initial read from the lin-kv service
+        then uses a fan out strategy using the 'local' messages to acquire reads
+        from all of its neighbors.
 
+        Sums those reads and returns them
+    */
+    concurrencpp::result<void> handle_read(const vortex::Message msg) {
         auto res = co_await read(node_id);
         int value = res["value"].get<int>();
 
@@ -77,12 +98,15 @@ class GrowOnlyNode : public vortex::KVNode {
         std::vector<concurrencpp::result<void>> tasks;
         for (const std::string &id : neighbors) {
             if (id != node_id) {
-                tasks.push_back(get_shared_sum_values({}, id));
+                tasks.emplace_back(get_shared_sum_values({}, id));
             }
         }
 
-        for (auto &task : tasks) {
-            co_await task;
+        if (!tasks.empty()) {
+            auto ready = co_await concurrencpp::when_all(executor(), tasks.begin(), tasks.end());
+            for (auto &r : ready) {
+                r.get();
+            }
         }
 
         json body;
@@ -111,7 +135,7 @@ class GrowOnlyNode : public vortex::KVNode {
 };
 
 int main() {
-    GrowOnlyNode node("lin-kv");
+    GrowOnlyNode node("seq-kv");
     node.run();
     return 0;
 }
