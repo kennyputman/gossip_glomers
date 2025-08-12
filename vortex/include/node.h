@@ -163,6 +163,7 @@ class Node {
     std::unordered_map<std::string, std::function<concurrencpp::result<void>(Message)>>
         rpc_callbacks;
     std::mutex rpc_callbacks_mutex;
+    concurrencpp::async_lock async_lock;
 
     concurrencpp::result<void> handle_init(const Message msg);
     Message parse_message(const std::string &input);

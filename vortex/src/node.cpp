@@ -106,7 +106,7 @@ concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json
 
     auto promise_ptr = std::make_shared<concurrencpp::result_promise<Message>>(std::move(promise));
     {
-        std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+        concurrencpp::scoped_async_lock raii_wrapper = co_await async_lock.lock(executor());
         rpc_callbacks.emplace(msg_id,
                               [promise_ptr](const Message msg) -> concurrencpp::result<void> {
                                   promise_ptr->set_result(msg);
@@ -130,7 +130,7 @@ concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json
 
     auto promise_ptr = std::make_shared<concurrencpp::result_promise<Message>>(std::move(promise));
     {
-        std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+        concurrencpp::scoped_async_lock raii_wrapper = co_await async_lock.lock(executor());
         rpc_callbacks.emplace(msg_id,
                               [promise_ptr](const Message msg) -> concurrencpp::result<void> {
                                   promise_ptr->set_result(msg);
@@ -151,8 +151,7 @@ concurrencpp::result<Message> Node::sync_rpc(const std::string &dest, const json
         co_return co_await ready_rpc;
     } else {
         {
-            // TODO: update to concurrencpp lock
-            std::lock_guard<std::mutex> lock(rpc_callbacks_mutex);
+            concurrencpp::scoped_async_lock raii_wrapper = co_await async_lock.lock(executor());
             rpc_callbacks.erase(msg_id);
         }
         throw std::runtime_error("rpc timeout");
