@@ -1,5 +1,5 @@
-add_executable(kafka
-    main.cpp
+add_executable(single_node
+    single_node.cpp
 )
 
-target_link_libraries(kafka PRIVATE vortex)
+target_link_libraries(single_node PRIVATE vortex)
