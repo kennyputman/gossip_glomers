@@ -91,12 +91,12 @@ class BroadcastNode : public vortex::Node {
                 body["messages"] = messages;
             }
 
-            std::vector<std::string> shuffled(this->neighbors.begin(), this->neighbors.end());
+            std::vector<std::string> shuffled(neighbors.begin(), neighbors.end());
             std::shuffle(shuffled.begin(), shuffled.end(), rng);
 
             int max_neighbors = 5;
             for (size_t i = 0; i < std::min<size_t>(max_neighbors, shuffled.size()); ++i) {
-                if (shuffled[i] != this->node_id) {
+                if (shuffled[i] != node_id) {
                     send(shuffled[i], body);
                 }
             }

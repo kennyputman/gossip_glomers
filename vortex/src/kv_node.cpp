@@ -1,5 +1,6 @@
 #include "kv_node.h"
 
+// TODO: upgrade this to an enum
 vortex::KVNode::KVNode(const std::string &service_id) : service_id(service_id) {
 }
 
